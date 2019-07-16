@@ -1,3 +1,5 @@
+Brief: 
+
 It is a firmware for fitolamp project placed on the EasyEDA: https://easyeda.com/kalashnikov.alexander.b/fitolamp
 
 It can be used as a smart fitolamp that controls luminosity and power on time to extend daylight hours for some herbs/plants.
@@ -7,3 +9,7 @@ Movement sensor used as a trigger to dim down the luminosity if someone is near 
 Luxmeter is used to hold the luminosity at some level. It helps to dim LEDs if there are enough light already, for example.
 
 Additional UART connector can be used for UART or bluetooth connection: for date and time configuration, or a schedule changing, or anything else.
+
+Build:
+
+Just open the project in System Workbench for STM32 and build Release configuration. After that upload firmware via SWD (STLINK) or UART (Flash Loader Demonstrator) to MCU.
