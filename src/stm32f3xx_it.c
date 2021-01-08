@@ -29,7 +29,10 @@ extern volatile uint16_t uw_MaxLuxes;
 extern void SetPWMPulseWidth(uint32_t width);
 extern uint8_t IsWorkHoursNow();
 extern void StartDimTo(uint16_t width);
+extern volatile char cUSARTBuffer[32];
 
+volatile uint8_t bPosition = 0;
+volatile uint32_t uwTicksUSARTLastReceive = USART_MAGIC_NUMBER;
 uint16_t ButtonPushedTicks = 0;
 uint32_t uw_DimTicks = 0;
 
@@ -47,6 +50,14 @@ uint32_t Ticks() {
 }
 
 void HAL_SYSTICK_Callback(void) {
+
+	if (uwTicksUSARTLastReceive != USART_MAGIC_NUMBER) /* Compare with our magic number, so we are sure that some data was received via USART */
+			if (uwTicks - uwTicksUSARTLastReceive > USART_TIMEOUT) { /* If last received time was long ago */
+				cUSARTBuffer[bPosition] = 0; /* Zero last byte, so we will have zero ended string */
+				bPosition = 0; /* Zero data buffer position */
+				uwTicksUSARTLastReceive = USART_MAGIC_NUMBER; /* Set our magic number until next USART transfer */
+				f_States |= (1U << 3); /* Set USART received flag */
+	}
 
 	if (!(SHUTDOWN) && (WORKHOURS) && !(DIMNEEDED)) { // We will read movement sensor only if the lamp was not shut down by hand and workhours are now, and we are not changing power
 
@@ -160,5 +171,19 @@ void RTC_ALARM_IT_IRQ_IRQHandler(void) {
 	}
 
 	PWR->CR  &= ~PWR_CR_DBP; /* Disabling write access to RTC registers */
+
+}
+
+void USART3_IRQ_IRQHandler(void) {
+
+	if (USART3->ISR & USART_ISR_RXNE) {
+
+		cUSARTBuffer[bPosition] = USART3->RDR; /* RXNE: flag will be cleared by this read */
+		uwTicksUSARTLastReceive = Ticks(); /* Update last received timer */
+
+		if (++bPosition > sizeof(cUSARTBuffer))
+			bPosition = 0;
+
+	}
 
 }

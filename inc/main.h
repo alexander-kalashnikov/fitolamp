@@ -23,12 +23,28 @@
 #define LONG_PRESS_PERIOD 700
 
 #define START_WORKHOUR 7
-#define END_WORKHOUR 22
+#define END_WORKHOUR 21
 
 #define WORKHOURS f_States & (1U<<5)
 #define DIMNEEDED f_States & (1U<<1)
+#define USART_RECEIVED f_States & (1U<<3)
 #define SHUTDOWN f_States & (1U)
 
 #define TUNE_TIMEOUT 60000 //Max tuning time is 1 minute
+
+#define USART_TIMEOUT 20
+#define USART_MAGIC_NUMBER 0xFFFFFFFF
+
+
+
+#define GETDATE 0
+#define SETDATE 1
+#define GETALARMS 2
+#define SETALARMS 3
+#define POWERON 4
+#define POWEROFF 5
+#define GETLUX 6
+#define GETMAXLUX 7
+#define SETMAXLUX 8
 
 #endif /* MAIN_H_ */

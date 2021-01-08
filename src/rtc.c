@@ -81,6 +81,29 @@ void InitializeRTC(void) {
 
 }
 
+void GetTime(uint8_t * seconds, uint8_t * minutes, uint8_t * hours) {
+
+	/* Wait until TR and DR will be synced with shadow registers */
+		while (!(RTC->ISR & RTC_ISR_RSF))
+			;
+
+		/* Read time(TR) register and check data(DR) register
+		 * to unlock theese registers for further syncing
+		 * with their shadow registers */
+		uint32_t TR = RTC->TR;
+		(void) RTC->DR;
+
+		/* Since that we accessed calendar registers quickly (less than in two RTCCLK periods), we have to clear RTC_ISR_RSF bit */
+		RTC->ISR &= ~RTC_ISR_RSF;
+
+		* seconds = ((TR & RTC_TR_ST_Msk) >> RTC_TR_ST_Pos) * 10
+				+ ((TR & RTC_TR_SU_Msk) >> RTC_TR_SU_Pos);
+		* minutes = ((TR & RTC_TR_MNT_Msk) >> RTC_TR_MNT_Pos) * 10
+				+ ((TR & RTC_TR_MNU_Msk) >> RTC_TR_MNU_Pos);
+		* hours = ((TR & RTC_TR_HT_Msk) >> RTC_TR_HT_Pos) * 10
+				+ ((TR & RTC_TR_HU_Msk) >> RTC_TR_HU_Pos);
+}
+
 void SetTime(uint8_t seconds, uint8_t minutes, uint8_t hours) {
 
 	DisableRTCProtection();
@@ -99,6 +122,22 @@ void SetTime(uint8_t seconds, uint8_t minutes, uint8_t hours) {
 	RTC->ISR &= ~RTC_ISR_INIT;
 
 	EnableRTCProtection();
+}
+
+void GetAlarms(uint8_t * start_hour, uint8_t * start_minutes, uint8_t * end_hour, uint8_t * end_minutes) {
+
+	/* Start Workhours */
+		uint32_t wStartWH = RTC->ALRMAR;
+		* start_hour = ((wStartWH & RTC_ALRMAR_HT_Msk) >> RTC_ALRMAR_HT_Pos) * 10 + ((wStartWH & RTC_ALRMAR_HU_Msk) >> RTC_ALRMAR_HU_Pos);
+
+		* start_minutes = ((wStartWH & RTC_ALRMAR_MNT_Msk) >> RTC_ALRMAR_MNT_Pos) * 10 + ((wStartWH & RTC_ALRMAR_MNU_Msk) >> RTC_ALRMAR_MNU_Pos);
+
+		/* End Workhours */
+		uint32_t wEndWH = RTC->ALRMBR;
+
+		* end_hour = ((wEndWH & RTC_ALRMBR_HT_Msk) >> RTC_ALRMBR_HT_Pos) * 10 + ((wEndWH & RTC_ALRMBR_HU_Msk) >> RTC_ALRMBR_HU_Pos);
+
+		* end_minutes = ((wEndWH & RTC_ALRMBR_MNT_Msk) >> RTC_ALRMBR_MNT_Pos) * 10 + ((wEndWH & RTC_ALRMBR_MNU_Msk) >> RTC_ALRMBR_MNU_Pos);
 }
 
 void SetAlarms(uint8_t start_hour, uint8_t start_minutes, uint8_t end_hour, uint8_t end_minutes) {
@@ -153,7 +192,7 @@ uint8_t IsHoursBetweenNow(uint8_t min, uint8_t max) {
 	uint8_t hoursNow = ((TR & RTC_TR_HT_Msk) >> RTC_TR_HT_Pos) * 10
 			+ ((TR & RTC_TR_HU_Msk) >> RTC_TR_HU_Pos);
 
-	return hoursNow >= min && hoursNow <= max;
+	return hoursNow >= min && hoursNow < max;
 
 }
 
